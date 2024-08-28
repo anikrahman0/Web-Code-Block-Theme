@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Block with Prism.js</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Moderustic:wght@300..800&display=swap" rel="stylesheet">
+
+    <!-- Prism.js CSS -->
+    <!-- <link href="css/themes/prism-tomorrow.min.css" rel="stylesheet" /> -->
+    <!-- <link href="css/themes/prism-okaidia.min.css" rel="stylesheet" /> -->
+    <link href="css/themes/palenight.css" rel="stylesheet" />
+    <!-- <link href="css/themes/prism-funky.css" rel="stylesheet" /> -->
+    <!-- <link href="css/themes/prism-dark.min.css" rel="stylesheet" /> -->
+    <!-- <link href="css/themes/light-green.css" rel="stylesheet" /> -->
+    <!-- <link href="css/themes/light.css" rel="stylesheet" /> -->
+    <!-- <link href="css/themes/light2.css" rel="stylesheet" /> -->
+    <!-- <link href="css/themes/light-creative.css" rel="stylesheet" /> -->
+</head>
+<body>
+
+    <div class="container-fluid">
+        <h1>Code Block Example with Prism.js</h1>
+        <p>Below is an example of a PHP code block styled with Prism.js:</p>
+        
+<pre><code class="language-php">
+&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Study;
+use Illuminate\Http\Request;
+
+class StudyController extends Controller
+{
+    public function index()
+    {
+        $study = Study::filter(request(['search']))->orderBy('id','desc')->paginate(20);
+        $startIndex = ($study->currentPage() - 1) * $study->perPage() + 1;
+        $endIndex = min($study->currentPage() * $study->perPage(), $study->total());
+        return view('admin.study.index')->with(['study'=>$study,'startIndex'=>$startIndex,'endIndex'=>$endIndex]);
+    }
+
+    public function addStudy()
+    {
+        return view('admin.study.add-study');
+    }
+    public function storeStudy(Request $request)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|unique:studies,title',
+            'showStudy' => 'required|integer',
+            'url'   => 'nullable|url|max:2000',
+        ]);
+        $study = new Study;
+        $study->title = $request->input('title');
+        $study->status = $request->input('showStudy');
+        $study->url = $request->input('url');
+        $study->save();
+        return redirect()->route('study.index')->with('success','Study has been added succesfully.');
+    }
+    public function editStudy($id)
+    {
+        $study=Study::findOrfail($id);
+        return view('admin.study.edit-study')->with('study',$study);
+    }
+    public function updateStudy(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|unique:studies,title,'.$id,
+            'showStudy' => 'required|integer',
+            'url'   => 'nullable|url|max:2000',
+        ]);
+        $p = Study::findOrFail($id);
+        $p->title = $request->get('title');
+        $p->status = $request->get('showStudy');
+        $p->url = $request->input('url');
+        $p->save();
+        return redirect()->route('study.index')->with('success','Study has been updated succesfully.');
+    }
+    public function deleteStudy($id)
+    {
+        Study::destroy($id);
+        return redirect()->route('study.index')-> with('success', 'Study has been removed successfully.');
+    }
+    public function deleteAllStudy()
+    {
+        $del_all_project = Study::query()->delete();
+        return redirect()->route('study.index')->with('success', 'All Study has been removed successfully');
+    }
+    public function deleteSelectedStudy(Request $request)
+    {
+        $ids = $request['ids'];
+        Study::whereIn('id', $ids)->delete();
+        return response()->json(['success' => 'All the selected study materials has been removed successfully']);
+    }
+}
+
+// route
+Route::controller(TagController::class)->group(function () {
+    Route::prefix('tags')->group(function () {
+        Route::get('/', 'index')->name('tag.index');
+        Route::get('/find', 'findTag')->name('tag.find');
+        Route::get('/add','addTag')->name('tag.add');
+        Route::post('/store','storeTag')->name('tag.store');
+        Route::post('/store/ajax','storeTagAjax')->name('tag.store.ajax');
+        Route::get('/edit/{id}','editTag')->name('tag.edit');
+        Route::post('update/{id}','updateTag')->name('tag.update');
+        Route::get('/delete/{id}', 'deleteTag')->name('tag.delete');
+        Route::get('/confirm/delete/all', 'deleteAllConfirm')->name('tag.confirm.delete-all');
+        Route::get('/all/delete','deleteAllTag')->name('tag.all.delete');
+        Route::post('/delete/selected', 'deleteSelectedTag')->name('tag.delete.selected');
+    });
+});
+</code></pre>
+
+<pre><code class="language-php">
+// CSS 
+code[class*="language-"],
+pre[class*="language-"] {
+  font-family: Consolas, Monaco, "Andale Mono", monospace;
+  direction: ltr;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+pre[class*="language-"] {
+  padding: 0.4em 0.8em;
+  margin: 0.5em 0;
+  overflow: auto;
+  background: #292D3E;
+  /* background: url('data:image/svg+xml;charset=utf-8,<svg%20version%3D"1.1"%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D"100"%20height%3D"100"%20fill%3D"rgba(0%2C0%2C0%2C.2)">%0D%0A<polygon%20points%3D"0%2C50%2050%2C0%200%2C0"%20%2F>%0D%0A<polygon%20points%3D"0%2C100%2050%2C100%20100%2C50%20100%2C0"%20%2F>%0D%0A<%2Fsvg>'); */
+  background-size: 1em 1em;
+}
+code[class*="language-"] {
+  color: #91efc3;
+}
+.token.function{
+    color: #f07178;
+}
+
+.token.class-name{
+    color: #e4d9ff;
+}
+
+:not(pre) > code[class*="language-"] {
+  padding: 0.2em;
+  border-radius: 0.3em;
+  box-shadow: none;
+}
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #939393;
+}
+.token.punctuation {
+  color: #bcb9ba;
+}
+.namespace {
+  opacity: 0.7;
+}
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #b5efe2;
+}
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #d6f493;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.token.inserted {
+    color: #d5a2f6;
+}
+
+.token.variable{
+    color: #96b4f6;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #82aaff;
+}
+.token.regex,
+.token.important {
+  color: #d0c4ef;
+}
+.token.important{
+    font-weight: 500;
+}
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+.token.entity {
+  cursor: help;
+}
+.token.deleted {
+    color: #f07178;
+}
+</code></pre>
+<pre><code class="language-php">
+// html
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Document&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<pre><code class="language-php">
+// Java 
+public class HelloWorld {
+    public static void main(String[] args) {
+        // Print "Hello, World!" to the console
+        System.out.println("Hello, World!");
+    }
+}
+</code></pre>
+
+<pre><code class="language-php">
+// C#
+using System;
+
+class Program {
+    static void Main(string[] args) {
+        Console.WriteLine("Hello, World!");
+    }
+}
+</code></pre>
+
+<pre><code class="language-php">
+// Javascript
+console.log("Hello, World!");
+</code></pre>
+
+<pre><code class="language-php">
+//Python
+print("Hello, World!")
+</code></pre>
+
+<pre><code class="language-php">
+// TypeScript
+let message: string = "Hello, World!";
+console.log(message);
+</code></pre>
+
+<pre><code class="language-php">
+// Go (Golang)
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+}
+</code></pre>
+
+<pre><code class="language-php">
+// Bash
+#!/bin/bash
+echo "Hello, World!"
+</code></pre>
+
+<pre><code class="language-php">
+// Git
+git init
+git add .
+git commit -m "Initial commit"
+</code></pre>
+
+<pre><code class="language-php">
+// Apache Configuration
+&lt;VirtualHost *:80&gt;
+    ServerName www.example.com
+    DocumentRoot /var/www/html
+&lt;/VirtualHost&gt;
+</code></pre>
+
+<pre><code class="language-php">
+// PowerShell
+Write-Output "Hello, World!"
+</code></pre>
+
+<pre><code class="language-php">
+// Ruby
+puts "Hello, World!"
+</code></pre>
+
+<pre><code class="language-php">
+// Perl
+print "Hello, World!\n";
+</code></pre>
+
+<pre><code class="language-php">
+// Http
+GET / HTTP/1.1
+Host: www.example.com
+</code></pre>
+
+<pre><code class="language-php">
+// INI
+[Settings]
+version=1.0
+name=Example
+</code></pre>
+
+<pre><code class="language-php">
+// SQL
+SELECT 'Hello, World!';
+</code></pre>
+
+<pre><code class="language-php">
+// SCSS
+$primary-color: #333;
+
+body {
+    color: $primary-color;
+}
+</code></pre>
+
+<pre><code class="language-php">
+// Markdown
+# Hello, World!
+This is a simple Markdown example.
+</code></pre>
+
+<pre><code class="language-php">
+// Dart 
+void main() {
+  print('Hello, World!');
+}
+</code></pre>
+
+<pre><code class="language-php">
+// C
+#include <stdio.h>
+int main() {
+    printf("Hello, World!\n");
+    return 0;
+}
+</code></pre>
+
+<pre><code class="language-php">
+// Swift
+import Foundation
+
+print("Hello, World!")
+
+let number = 5
+print("The number is \(number)")
+</code></pre>
+</div>
+
+    <!-- Prism.js JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-powershell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-aspnet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-apacheconf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-scheme.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-scss.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-perl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-ini.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-http.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-git.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-dart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-css-extras.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-swift.min.js"></script>
+</body>
+</html>
